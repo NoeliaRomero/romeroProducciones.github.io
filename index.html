@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurcoDigital — Tienda de música</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0c0a; --bg2: #161512; --bg3: #1e1c18;
+    --cream: #f0ead8; --cream2: #c8bfa8;
+    --gold: #c9a84c; --gold2: #e8c76a;
+    --red: #c0392b;
+    --border: rgba(240,234,216,0.1); --border2: rgba(240,234,216,0.22);
+    --font-d: 'Playfair Display', Georgia, serif;
+    --font-m: 'Space Mono', monospace;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--cream); font-family: var(--font-m); min-height: 100vh; }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,12,10,0.94); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem; height: 64px;
+  }
+  .logo { font-family: var(--font-d); font-size: 1.2rem; color: var(--cream); }
+  .logo em { color: var(--gold); font-style: italic; }
+  .nav-right { display: flex; gap: 0.75rem; align-items: center; }
+  .nav-btn {
+    background: transparent; border: 1px solid var(--border2);
+    color: var(--cream2); font-family: var(--font-m);
+    font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.45rem 1rem; cursor: pointer; transition: all 0.2s;
+  }
+  .nav-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .cart-wrap { position: relative; }
+  .cart-dot {
+    position: absolute; top: -6px; right: -6px;
+    background: var(--red); color: #fff;
+    width: 16px; height: 16px; border-radius: 50%;
+    font-size: 0.6rem; display: none; align-items: center; justify-content: center;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* STORE */
+  .store-hero { max-width: 1100px; margin: 0 auto; padding: 4rem 2.5rem 2.5rem; border-bottom: 1px solid var(--border); }
+  .eyebrow { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; }
+  .store-hero h1 { font-family: var(--font-d); font-size: clamp(2rem,4vw,3rem); line-height: 1.15; }
+  .store-hero h1 em { color: var(--gold); }
+  .catalog-wrap { max-width: 1100px; margin: 0 auto; padding: 2.5rem; }
+  .cat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+  .filter-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .fbtn { background: transparent; border: 1px solid var(--border2); color: var(--cream2); font-family: var(--font-m); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.35rem 0.9rem; cursor: pointer; transition: all 0.2s; }
+  .fbtn:hover, .fbtn.active { border-color: var(--gold); color: var(--gold); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 1.25rem; }
+  .card { background: var(--bg2); border: 1px solid var(--border); transition: border-color 0.2s, transform 0.2s; overflow: hidden; }
+  .card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .cover-wrap { position: relative; cursor: pointer; }
+  .cover { aspect-ratio:1; width:100%; object-fit:cover; display:block; background:var(--bg3); }
+  .cover-ph { aspect-ratio:1; width:100%; background:var(--bg3); display:flex; align-items:center; justify-content:center; }
+  .vinyl-anim { width:72px;height:72px;border-radius:50%;background:radial-gradient(circle,#2a2520 0%,#111 50%,#0d0c0a 100%);border:1px solid rgba(201,168,76,0.25);display:flex;align-items:center;justify-content:center;animation:spin 6s linear infinite; }
+  .vinyl-anim::after { content:'';width:12px;height:12px;border-radius:50%;background:var(--gold);opacity:.8; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .play-overlay { position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s; }
+  .cover-wrap:hover .play-overlay { opacity:1; }
+  .play-circle { width:48px;height:48px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.1rem;padding-left:3px;color:var(--bg); }
+  .card-body { padding:0.85rem 1rem; }
+  .card-genre { font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:0.3rem; }
+  .card-title { font-family:var(--font-d);font-size:1rem;line-height:1.25;color:var(--cream);margin-bottom:0.2rem; }
+  .card-artist { font-size:0.7rem;color:var(--cream2);margin-bottom:0.5rem; }
+  .card-tracks { font-size:0.62rem;color:var(--cream2);margin-bottom:0.65rem; }
+  .card-footer { display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.65rem; }
+  .price { font-size:0.95rem;font-weight:700;color:var(--gold); }
+  .add-btn { background:transparent;border:1px solid var(--border2);color:var(--cream2);font-family:var(--font-m);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.35rem 0.85rem;cursor:pointer;transition:all 0.2s; }
+  .add-btn:hover { background:var(--gold);border-color:var(--gold);color:var(--bg); }
+
+  /* MINI PLAYER */
+  .mini-player { position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border2);padding:0.75rem 2rem;display:none;align-items:center;gap:1.5rem;z-index:90; }
+  .mini-player.visible { display:flex; }
+  .player-info { flex:1;min-width:0; }
+  .player-title { font-family:var(--font-d);font-size:0.9rem;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .player-artist { font-size:0.65rem;color:var(--cream2); }
+  .player-controls { display:flex;gap:0.75rem;align-items:center; }
+  .pc-btn { background:none;border:none;color:var(--cream2);font-size:1.2rem;cursor:pointer;transition:color 0.2s;line-height:1; }
+  .pc-btn:hover { color:var(--gold); }
+  .pc-play { width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1rem; }
+  .pc-play:hover { background:var(--gold2); }
+  .progress-wrap { flex:1;max-width:300px; }
+  .progress-track { height:3px;background:var(--border2);border-radius:2px;cursor:pointer;position:relative; }
+  .progress-fill { height:100%;background:var(--gold);border-radius:2px;width:0%;pointer-events:none; }
+  .time-row { display:flex;justify-content:space-between;font-size:0.6rem;color:var(--cream2);margin-top:4px; }
+  .player-lock { font-size:0.62rem;color:var(--gold);letter-spacing:0.05em;white-space:nowrap; }
+  .player-close { background:none;border:none;color:var(--cream2);cursor:pointer;font-size:1.2rem; }
+  .player-close:hover { color:var(--red); }
+
+  /* ADMIN */
+  .admin-wrap { max-width:780px;margin:0 auto;padding:3rem 2.5rem; }
+  .admin-head { display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem; }
+  .admin-head h2 { font-family:var(--font-d);font-size:1.6rem; }
+  .form-box { background:var(--bg2);border:1px solid var(--border2);padding:2rem;margin-bottom:2rem; }
+  .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:1.25rem; }
+  .fg { display:flex;flex-direction:column;gap:0.45rem; }
+  .fg.full { grid-column:1/-1; }
+  label { font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--cream2); }
+  input[type=text],input[type=number],textarea,select { background:var(--bg3);border:1px solid var(--border2);color:var(--cream);font-family:var(--font-m);font-size:0.78rem;padding:0.7rem 0.9rem;outline:none;transition:border-color 0.2s;width:100%; }
+  input:focus,textarea:focus,select:focus { border-color:var(--gold); }
+  textarea { resize:vertical;min-height:70px; }
+  select option { background:var(--bg3); }
+  .dropz { border:2px dashed var(--border2);padding:2rem;text-align:center;cursor:pointer;transition:all 0.2s;position:relative; }
+  .dropz:hover { border-color:var(--gold);background:rgba(201,168,76,0.03); }
+  .dropz input { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%; }
+  .dropz-icon { font-size:1.8rem;margin-bottom:0.5rem; }
+  .dropz-txt { font-size:0.72rem;color:var(--cream2);line-height:1.6; }
+  .dropz-txt strong { color:var(--gold); }
+  .file-list { margin-top:0.75rem; }
+  .fi { display:flex;align-items:center;gap:0.6rem;background:var(--bg3);border:1px solid var(--border);padding:0.5rem 0.85rem;margin-bottom:0.4rem;font-size:0.72rem; }
+  .fi .fn { flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--cream); }
+  .fi .fs { color:var(--cream2); }
+  .fi .frm { background:none;border:none;color:var(--red);cursor:pointer;font-size:0.95rem; }
+  .cover-thumb { width:70px;height:70px;object-fit:cover;border:1px solid var(--border2);margin-top:0.6rem;display:none; }
+  .pub-btn { width:100%;background:var(--gold);color:var(--bg);border:none;font-family:var(--font-m);font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:0.95rem;cursor:pointer;transition:background 0.2s;margin-top:1.5rem; }
+  .pub-btn:hover { background:var(--gold2); }
+  .pub-list { background:var(--bg2);border:1px solid var(--border2); }
+  .pub-item { display:flex;align-items:center;gap:1rem;padding:0.85rem 1.25rem;border-bottom:1px solid var(--border); }
+  .pub-item:last-child { border-bottom:none; }
+  .pub-cover { width:44px;height:44px;object-fit:cover;background:var(--bg3);flex-shrink:0; }
+  .pub-cover-ph { width:44px;height:44px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem; }
+  .pub-meta { flex:1; }
+  .pub-title { font-family:var(--font-d);font-size:0.9rem;color:var(--cream); }
+  .pub-sub { font-size:0.65rem;color:var(--cream2);margin-top:2px; }
+  .pub-price { font-size:0.85rem;font-weight:700;color:var(--gold);margin-right:0.75rem; }
+  .del-btn { background:none;border:1px solid rgba(192,57,43,0.3);color:var(--red);font-family:var(--font-m);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.3rem 0.7rem;cursor:pointer;transition:all 0.2s; }
+  .del-btn:hover { background:var(--red);color:#fff; }
+  .empty-list { padding:2rem;text-align:center;font-size:0.78rem;color:var(--cream2); }
+
+  /* CART */
+  .overlay { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:none;justify-content:flex-end; }
+  .overlay.open { display:flex; }
+  .cart-panel { width:min(400px,100vw);height:100vh;background:var(--bg2);border-left:1px solid var(--border2);display:flex;flex-direction:column; }
+  .cp-head { display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border); }
+  .cp-head h2 { font-family:var(--font-d);font-size:1.15rem; }
+  .cp-close { background:none;border:none;color:var(--cream2);font-size:1.3rem;cursor:pointer; }
+  .cp-items { flex:1;overflow-y:auto;padding:1rem 1.5rem; }
+  .ci { display:flex;align-items:center;gap:0.85rem;padding:0.75rem 0;border-bottom:1px solid var(--border); }
+  .ci-info { flex:1; }
+  .ci-title { font-family:var(--font-d);font-size:0.88rem;color:var(--cream); }
+  .ci-artist { font-size:0.68rem;color:var(--cream2);margin-top:2px; }
+  .ci-price { font-size:0.82rem;font-weight:700;color:var(--gold); }
+  .ci-rm { background:none;border:none;color:var(--cream2);cursor:pointer;font-size:1rem; }
+  .ci-rm:hover { color:var(--red); }
+  .cp-foot { padding:1.25rem 1.5rem;border-top:1px solid var(--border2); }
+  .cp-total { display:flex;justify-content:space-between;margin-bottom:1rem; }
+  .cp-total span { font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--cream2); }
+  .cp-total strong { font-size:1rem;color:var(--gold); }
+  .ck-btn { width:100%;background:var(--gold);color:var(--bg);border:none;font-family:var(--font-m);font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:0.95rem;cursor:pointer;transition:background 0.2s; }
+  .ck-btn:hover { background:var(--gold2); }
+  .empty-c { text-align:center;padding:2.5rem 1rem;color:var(--cream2);font-size:0.78rem;line-height:1.8; }
+
+  /* MODAL */
+  .modal-wrap { position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;display:none;align-items:center;justify-content:center; }
+  .modal-wrap.open { display:flex; }
+  .modal { background:var(--bg2);border:1px solid var(--border2);padding:2.5rem;width:min(380px,90vw); }
+  .modal h3 { font-family:var(--font-d);font-size:1.3rem;margin-bottom:0.5rem; }
+  .modal p { font-size:0.72rem;color:var(--cream2);margin-bottom:1.25rem;line-height:1.6; }
+  .modal input { width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--cream);font-family:var(--font-m);font-size:0.8rem;padding:0.7rem 1rem;outline:none;margin-bottom:1rem; }
+  .modal input:focus { border-color:var(--gold); }
+  .modal-btns { display:flex;gap:0.75rem; }
+  .mbtn { flex:1;padding:0.75rem;font-family:var(--font-m);font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;border:none; }
+  .mbtn.p { background:var(--gold);color:var(--bg); }
+  .mbtn.p:hover { background:var(--gold2); }
+  .mbtn.s { background:transparent;border:1px solid var(--border2);color:var(--cream2); }
+  .mbtn.s:hover { border-color:var(--cream2);color:var(--cream); }
+  .modal-err { font-size:0.68rem;color:var(--red);margin-bottom:0.75rem;display:none; }
+
+  /* TOAST */
+  .toast { position:fixed;bottom:5.5rem;right:2rem;background:var(--bg2);border:1px solid var(--gold);color:var(--cream);font-family:var(--font-m);font-size:0.72rem;padding:0.75rem 1.25rem;transform:translateY(80px);opacity:0;transition:all 0.3s;z-index:999;pointer-events:none; }
+  .toast.show { transform:translateY(0);opacity:1; }
+
+  @media(max-width:700px){
+    nav{padding:0 1rem;}
+    .store-hero,.catalog-wrap,.admin-wrap{padding-left:1rem;padding-right:1rem;}
+    .form-grid{grid-template-columns:1fr;}
+    .mini-player{padding:0.6rem 1rem;gap:0.75rem;}
+    .progress-wrap,.player-lock{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Surco<em>Digital</em></div>
+  <div class="nav-right">
+    <div class="cart-wrap">
+      <button class="nav-btn" onclick="openCart()">🛒 Carrito</button>
+      <span class="cart-dot" id="cart-dot">0</span>
+    </div>
+    <button class="nav-btn" onclick="showAdminLogin()">Panel admin</button>
+  </div>
+</nav>
+
+<!-- TIENDA -->
+<div class="view active" id="view-store">
+  <div class="store-hero">
+    <p class="eyebrow">// Música independiente</p>
+    <h1>Escuchá, elegí,<br><em>llevate lo que amás.</em></h1>
+  </div>
+  <div class="catalog-wrap">
+    <div class="cat-header">
+      <div style="font-size:0.75rem;color:var(--cream2)">Escuchá antes de comprar</div>
+      <div class="filter-bar" id="filter-bar">
+        <button class="fbtn active" onclick="setFilter('Todos',this)">Todos</button>
+      </div>
+    </div>
+    <div class="grid" id="catalog-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--cream2);font-size:0.8rem;line-height:1.8">
+        Todavía no hay álbumes publicados.<br>El administrador subirá la música pronto.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="view" id="view-admin">
+  <div class="admin-wrap">
+    <div class="admin-head">
+      <h2>Panel de administrador</h2>
+      <button class="nav-btn" onclick="logoutAdmin()">Cerrar sesión</button>
+    </div>
+
+    <div class="form-box">
+      <p class="eyebrow" style="margin-bottom:1.25rem">// Subir nuevo álbum</p>
+      <div class="form-grid">
+        <div class="fg"><label>Título del álbum *</label><input type="text" id="f-title" placeholder="Noches de Mendoza"></div>
+        <div class="fg"><label>Artista / Banda *</label><input type="text" id="f-artist" placeholder="Los Álamos"></div>
+        <div class="fg">
+          <label>Género</label>
+          <select id="f-genre">
+            <option>Rock</option><option>Pop</option><option>Folklore</option>
+            <option>Jazz</option><option>Electrónica</option><option>Hip-Hop</option>
+            <option>Clásica</option><option>Tango</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="fg"><label>Precio (ARS $) *</label><input type="number" id="f-price" placeholder="2500" min="0"></div>
+        <div class="fg full"><label>Descripción</label><textarea id="f-desc" placeholder="Contá algo sobre este álbum…"></textarea></div>
+        <div class="fg">
+          <label>Tapa del álbum</label>
+          <div class="dropz">
+            <input type="file" accept="image/*" id="f-cover" onchange="handleCover(this)">
+            <div class="dropz-icon">🖼</div>
+            <div class="dropz-txt"><strong>Elegí imagen</strong><br>JPG, PNG, WEBP</div>
+          </div>
+          <img id="cover-thumb" class="cover-thumb">
+        </div>
+        <div class="fg">
+          <label>Archivos de audio *</label>
+          <div class="dropz">
+            <input type="file" accept="audio/*,.mp3,.wav,.flac" multiple id="f-audio" onchange="handleAudio(this)">
+            <div class="dropz-icon">🎵</div>
+            <div class="dropz-txt"><strong>Elegí tus tracks</strong><br>MP3, WAV, FLAC — múltiples</div>
+          </div>
+          <div class="file-list" id="audio-list"></div>
+        </div>
+      </div>
+      <button class="pub-btn" onclick="publishAlbum()">Publicar álbum en la tienda</button>
+    </div>
+
+    <p class="eyebrow" style="margin-bottom:0.75rem">// Álbumes publicados</p>
+    <div class="pub-list" id="pub-list">
+      <div class="empty-list">No hay álbumes publicados todavía.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CART -->
+<div class="overlay" id="cart-overlay" onclick="closeCartOutside(event)">
+  <div class="cart-panel">
+    <div class="cp-head">
+      <h2>Carrito</h2>
+      <button class="cp-close" onclick="closeCart()">✕</button>
+    </div>
+    <div class="cp-items" id="cp-items"></div>
+    <div class="cp-foot">
+      <div class="cp-total"><span>Total</span><strong id="cp-total">$0</strong></div>
+      <button class="ck-btn" onclick="checkout()">Confirmar pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MINI PLAYER -->
+<div class="mini-player" id="mini-player">
+  <div class="player-info">
+    <div class="player-title" id="p-title">—</div>
+    <div class="player-artist" id="p-artist">—</div>
+  </div>
+  <div class="player-controls">
+    <button class="pc-btn" onclick="prevTrack()">⏮</button>
+    <button class="pc-btn pc-play" id="pp-btn" onclick="togglePlay()">▶</button>
+    <button class="pc-btn" onclick="nextTrack()">⏭</button>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track" onclick="seekAudio(event)">
+      <div class="progress-fill" id="p-fill"></div>
+    </div>
+    <div class="time-row"><span id="p-cur">0:00</span><span id="p-dur">0:00</span></div>
+  </div>
+  <span class="player-lock">🔒 Vista previa</span>
+  <button class="player-close" onclick="stopPlayer()">✕</button>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal-wrap" id="admin-modal">
+  <div class="modal">
+    <h3>Acceso admin</h3>
+    <p>Ingresá la contraseña para administrar la tienda.</p>
+    <p class="modal-err" id="modal-err">Contraseña incorrecta.</p>
+    <input type="password" id="admin-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')checkPass()">
+    <div class="modal-btns">
+      <button class="mbtn s" onclick="closeAdminModal()">Cancelar</button>
+      <button class="mbtn p" onclick="checkPass()">Ingresar</button>
+    </div>
+    <p style="font-size:0.6rem;color:var(--cream2);margin-top:1.25rem">Contraseña por defecto: <strong style="color:var(--gold)">admin123</strong><br>Cambiala en el código (variable ADMIN_PASSWORD).</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<audio id="audio-el"></audio>
+
+<script>
+const ADMIN_PASSWORD = 'admin123'; // ← Cambiá esto
+let albums = [], cart = [], isAdmin = false;
+let coverFile = null, audioFiles = [];
+let currentAlbumId = null, currentTrackIdx = 0, isPlaying = false;
+const audioEl = document.getElementById('audio-el');
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+function fmt(s) {
+  if (isNaN(s)) return '0:00';
+  return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
+}
+
+// ADMIN AUTH
+function showAdminLogin() {
+  if (isAdmin) { switchToAdmin(); return; }
+  document.getElementById('admin-modal').classList.add('open');
+  setTimeout(() => document.getElementById('admin-pass').focus(), 100);
+}
+function closeAdminModal() {
+  document.getElementById('admin-modal').classList.remove('open');
+  document.getElementById('admin-pass').value = '';
+  document.getElementById('modal-err').style.display = 'none';
+}
+function checkPass() {
+  if (document.getElementById('admin-pass').value === ADMIN_PASSWORD) {
+    isAdmin = true; closeAdminModal(); switchToAdmin();
+  } else {
+    document.getElementById('modal-err').style.display = 'block';
+  }
+}
+function logoutAdmin() {
+  isAdmin = false;
+  document.getElementById('view-admin').classList.remove('active');
+  document.getElementById('view-store').classList.add('active');
+  toast('Sesión cerrada.');
+}
+function switchToAdmin() {
+  document.getElementById('view-store').classList.remove('active');
+  document.getElementById('view-admin').classList.add('active');
+  renderPubList();
+}
+
+// UPLOAD
+function handleCover(input) {
+  coverFile = input.files[0];
+  if (!coverFile) return;
+  const img = document.getElementById('cover-thumb');
+  img.src = URL.createObjectURL(coverFile);
+  img.style.display = 'block';
+}
+function handleAudio(input) {
+  audioFiles = Array.from(input.files);
+  renderAudioFileList();
+}
+function renderAudioFileList() {
+  document.getElementById('audio-list').innerHTML = audioFiles.map((f,i) => `
+    <div class="fi">
+      <span style="color:var(--gold);font-size:0.65rem">${String(i+1).padStart(2,'0')}</span>
+      <span class="fn">${f.name}</span>
+      <span class="fs">${(f.size/1024/1024).toFixed(1)}MB</span>
+      <button class="frm" onclick="rmAudio(${i})">✕</button>
+    </div>
+  `).join('');
+}
+function rmAudio(i) { audioFiles.splice(i,1); renderAudioFileList(); }
+
+function publishAlbum() {
+  const title = document.getElementById('f-title').value.trim();
+  const artist = document.getElementById('f-artist').value.trim();
+  const price = parseFloat(document.getElementById('f-price').value);
+  const genre = document.getElementById('f-genre').value;
+  const desc = document.getElementById('f-desc').value.trim();
+  if (!title || !artist || isNaN(price) || price < 0) { toast('Completá título, artista y precio.'); return; }
+  if (!audioFiles.length) { toast('Agregá al menos un track.'); return; }
+
+  albums.push({
+    id: Date.now(), title, artist, price, genre, desc,
+    coverUrl: coverFile ? URL.createObjectURL(coverFile) : null,
+    tracks: audioFiles.map(f => f.name),
+    // Blob URLs for in-browser preview only — not downloadable by the user
+    audioUrls: audioFiles.map(f => URL.createObjectURL(f))
+  });
+  resetForm(); renderCatalog(); updateFilters(); renderPubList();
+  toast(`"${title}" publicado en la tienda.`);
+}
+function resetForm() {
+  ['f-title','f-artist','f-price','f-desc'].forEach(id => document.getElementById(id).value = '');
+  ['f-cover','f-audio'].forEach(id => document.getElementById(id).value = '');
+  const img = document.getElementById('cover-thumb');
+  img.style.display = 'none'; img.src = '';
+  document.getElementById('audio-list').innerHTML = '';
+  coverFile = null; audioFiles = [];
+}
+function deleteAlbum(id) {
+  if (!confirm('¿Eliminar este álbum?')) return;
+  albums = albums.filter(a => a.id !== id);
+  cart = cart.filter(c => c.id !== id);
+  if (currentAlbumId === id) stopPlayer();
+  renderCatalog(); updateFilters(); renderPubList(); updateCartUI();
+  toast('Álbum eliminado.');
+}
+function renderPubList() {
+  const el = document.getElementById('pub-list');
+  if (!albums.length) { el.innerHTML = '<div class="empty-list">No hay álbumes publicados todavía.</div>'; return; }
+  el.innerHTML = albums.map(a => `
+    <div class="pub-item">
+      ${a.coverUrl ? `<img class="pub-cover" src="${a.coverUrl}">` : `<div class="pub-cover-ph">🎵</div>`}
+      <div class="pub-meta">
+        <div class="pub-title">${a.title}</div>
+        <div class="pub-sub">${a.artist} · ${a.genre} · ${a.tracks.length} track(s)</div>
+      </div>
+      <span class="pub-price">$${a.price.toLocaleString('es-AR')}</span>
+      <button class="del-btn" onclick="deleteAlbum(${a.id})">Eliminar</button>
+    </div>
+  `).join('');
+}
+
+// CATALOG
+let currentFilter = 'Todos';
+function updateFilters() {
+  const genres = ['Todos', ...new Set(albums.map(a => a.genre))];
+  document.getElementById('filter-bar').innerHTML = genres.map(g =>
+    `<button class="fbtn ${g===currentFilter?'active':''}" onclick="setFilter('${g}',this)">${g}</button>`
+  ).join('');
+}
+function setFilter(g, btn) {
+  currentFilter = g;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCatalog();
+}
+function renderCatalog() {
+  const grid = document.getElementById('catalog-grid');
+  const list = currentFilter === 'Todos' ? albums : albums.filter(a => a.genre === currentFilter);
+  if (!list.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--cream2);font-size:0.8rem;line-height:1.8">
+      ${!albums.length ? 'Todavía no hay álbumes. El administrador subirá la música pronto.' : 'No hay álbumes en esta categoría.'}
+    </div>`; return;
+  }
+  grid.innerHTML = list.map(a => `
+    <div class="card">
+      <div class="cover-wrap" onclick="playAlbum(${a.id})">
+        ${a.coverUrl
+          ? `<img src="${a.coverUrl}" class="cover" alt="${a.title}">`
+          : `<div class="cover-ph"><div class="vinyl-anim"></div></div>`}
+        <div class="play-overlay"><div class="play-circle">▶</div></div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">${a.genre}</p>
+        <h3 class="card-title">${a.title}</h3>
+        <p class="card-artist">${a.artist}</p>
+        <p class="card-tracks">🎵 ${a.tracks.length} track${a.tracks.length!==1?'s':''} · Vista previa</p>
+        <div class="card-footer">
+          <span class="price">$${a.price.toLocaleString('es-AR')}</span>
+          <button class="add-btn" onclick="addToCart(${a.id})">Comprar</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// PLAYER
+function playAlbum(id, idx = 0) {
+  const a = albums.find(x => x.id === id);
+  if (!a) return;
+  currentAlbumId = id; currentTrackIdx = idx;
+  loadTrack(a, idx);
+  document.getElementById('mini-player').classList.add('visible');
+}
+function loadTrack(a, idx) {
+  audioEl.src = a.audioUrls[idx];
+  audioEl.play().then(() => { isPlaying = true; updatePP(); }).catch(() => {});
+  document.getElementById('p-title').textContent = a.tracks[idx].replace(/\.[^.]+$/,'') || a.title;
+  document.getElementById('p-artist').textContent = a.artist;
+}
+function togglePlay() {
+  if (!currentAlbumId) return;
+  if (isPlaying) { audioEl.pause(); isPlaying = false; }
+  else { audioEl.play(); isPlaying = true; }
+  updatePP();
+}
+function updatePP() { document.getElementById('pp-btn').textContent = isPlaying ? '⏸' : '▶'; }
+function prevTrack() {
+  const a = albums.find(x => x.id === currentAlbumId); if (!a) return;
+  currentTrackIdx = (currentTrackIdx - 1 + a.tracks.length) % a.tracks.length;
+  loadTrack(a, currentTrackIdx);
+}
+function nextTrack() {
+  const a = albums.find(x => x.id === currentAlbumId); if (!a) return;
+  currentTrackIdx = (currentTrackIdx + 1) % a.tracks.length;
+  loadTrack(a, currentTrackIdx);
+}
+function stopPlayer() {
+  audioEl.pause(); audioEl.src = '';
+  isPlaying = false; currentAlbumId = null;
+  document.getElementById('mini-player').classList.remove('visible');
+}
+function seekAudio(e) {
+  if (!audioEl.duration) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  audioEl.currentTime = ((e.clientX - r.left) / r.width) * audioEl.duration;
+}
+audioEl.addEventListener('timeupdate', () => {
+  if (!audioEl.duration) return;
+  document.getElementById('p-fill').style.width = (audioEl.currentTime / audioEl.duration * 100) + '%';
+  document.getElementById('p-cur').textContent = fmt(audioEl.currentTime);
+  document.getElementById('p-dur').textContent = fmt(audioEl.duration);
+});
+audioEl.addEventListener('ended', nextTrack);
+// Prevent context menu "Save audio as" on the audio element
+audioEl.addEventListener('contextmenu', e => e.preventDefault());
+
+// CART
+function addToCart(id) {
+  const a = albums.find(x => x.id === id); if (!a) return;
+  if (cart.find(c => c.id === id)) { toast('Ya está en tu carrito.'); return; }
+  cart.push(a); updateCartUI();
+  toast(`"${a.title}" agregado al carrito.`);
+}
+function removeFromCart(id) { cart = cart.filter(c => c.id !== id); updateCartUI(); }
+function updateCartUI() {
+  const dot = document.getElementById('cart-dot');
+  dot.textContent = cart.length;
+  dot.style.display = cart.length ? 'flex' : 'none';
+  const items = document.getElementById('cp-items');
+  items.innerHTML = !cart.length
+    ? '<div class="empty-c">Tu carrito está vacío.<br>Escuchá y elegí tus álbumes.</div>'
+    : cart.map(a => `
+        <div class="ci">
+          <div class="ci-info">
+            <div class="ci-title">${a.title}</div>
+            <div class="ci-artist">${a.artist}</div>
+          </div>
+          <span class="ci-price">$${a.price.toLocaleString('es-AR')}</span>
+          <button class="ci-rm" onclick="removeFromCart(${a.id})">✕</button>
+        </div>`).join('');
+  document.getElementById('cp-total').textContent = '$' + cart.reduce((s,a)=>s+a.price,0).toLocaleString('es-AR');
+}
+function openCart() { document.getElementById('cart-overlay').classList.add('open'); updateCartUI(); }
+function closeCart() { document.getElementById('cart-overlay').classList.remove('open'); }
+function closeCartOutside(e) { if (e.target === document.getElementById('cart-overlay')) closeCart(); }
+function checkout() {
+  if (!cart.length) { toast('Tu carrito está vacío.'); return; }
+  // 👉 Aquí integrás MercadoPago, Stripe u otro procesador de pago
+  alert(`Pedido por $${cart.reduce((s,a)=>s+a.price,0).toLocaleString('es-AR')} confirmado.\n\nIntegrá aquí tu procesador de pago (MercadoPago, Stripe, etc.) para cobrar y luego entregar el acceso.`);
+  cart = []; updateCartUI(); closeCart();
+}
+updateCartUI();
+</script>
+</body>
+</html>
